@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Mail, Lock, Loader2, User, Stethoscope, ArrowLeft } from 'lucide-react';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [userType, setUserType] = useState('patient');
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const userParam = searchParams.get('user');
+        if (userParam === 'admin' || userParam === 'patient') {
+            setUserType(userParam);
+        }
+    }, [searchParams]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -14,91 +23,158 @@ const Login = () => {
         // Simulate API call
         setTimeout(() => {
             setIsLoading(false);
-            navigate('/');
+            if (userType === 'admin') {
+                navigate('/app');
+            } else {
+                navigate('/app');
+            }
         }, 1000);
     };
 
+    const toggleUserType = (type) => {
+        setUserType(type);
+        setEmail('');
+        setPassword('');
+    };
+
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-            <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8">
-                <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold text-gray-900">Sign In</h2>
-                    <p className="text-gray-500 mt-2">Welcome back to your account</p>
-                </div>
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center p-4">
+            <div className="max-w-md w-full">
+                {/* Back to Landing */}
+                <Link
+                    to="/"
+                    className="flex items-center text-gray-600 hover:text-indigo-600 mb-6 transition-colors"
+                >
+                    <ArrowLeft size={20} className="mr-2" />
+                    Back to Landing Page
+                </Link>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Mail className="h-5 w-5 text-gray-400" />
-                            </div>
-                            <input
-                                type="email"
-                                required
-                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
-                                placeholder="you@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
+                <div className="bg-white rounded-xl shadow-lg p-8">
+                    {/* User Type Toggle */}
+                    <div className="flex mb-8 bg-gray-100 rounded-lg p-1">
+                        <button
+                            type="button"
+                            onClick={() => toggleUserType('patient')}
+                            className={`flex-1 flex items-center justify-center py-2 px-4 rounded-md transition-all ${
+                                userType === 'patient'
+                                    ? 'bg-white text-indigo-600 shadow-sm'
+                                    : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                            <User size={18} className="mr-2" />
+                            Patient
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => toggleUserType('admin')}
+                            className={`flex-1 flex items-center justify-center py-2 px-4 rounded-md transition-all ${
+                                userType === 'admin'
+                                    ? 'bg-white text-indigo-600 shadow-sm'
+                                    : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                            <Stethoscope size={18} className="mr-2" />
+                            Admin
+                        </button>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Lock className="h-5 w-5 text-gray-400" />
-                            </div>
-                            <input
-                                type="password"
-                                required
-                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
+                    <div className="text-center mb-8">
+                        <h2 className="text-3xl font-bold text-gray-900">
+                            {userType === 'admin' ? 'Admin Login' : 'Patient Login'}
+                        </h2>
+                        <p className="text-gray-500 mt-2">
+                            {userType === 'admin' 
+                                ? 'Access clinic management dashboard' 
+                                : 'Access your patient portal'
+                            }
+                        </p>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                            <input
-                                id="remember-me"
-                                name="remember-me"
-                                type="checkbox"
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                            />
-                            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                                Remember me
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Email Address
                             </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Mail className="h-5 w-5 text-gray-400" />
+                                </div>
+                                <input
+                                    type="email"
+                                    required
+                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
+                                    placeholder={userType === 'admin' ? 'admin@clinic.com' : 'patient@email.com'}
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                            </div>
                         </div>
 
-                        <div className="text-sm">
-                            <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Password
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Lock className="h-5 w-5 text-gray-400" />
+                                </div>
+                                <input
+                                    type="password"
+                                    required
+                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                                <input
+                                    id="remember"
+                                    name="remember"
+                                    type="checkbox"
+                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                />
+                                <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
+                                    Remember me
+                                </label>
+                            </div>
+                            <a href="#" className="text-sm text-indigo-600 hover:text-indigo-500">
                                 Forgot password?
                             </a>
                         </div>
+
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="animate-spin mr-2" size={20} />
+                                    Signing in...
+                                </>
+                            ) : (
+                                <>
+                                    {userType === 'admin' ? 'Access Dashboard' : 'Access Portal'}
+                                </>
+                            )}
+                        </button>
+                    </form>
+
+                    <div className="mt-6 text-center">
+                        <p className="text-sm text-gray-600">
+                            {userType === 'admin' ? "Don't have admin access?" : "New patient?"}{' '}
+                            <Link 
+                                to={userType === 'admin' ? "/login?user=patient" : "/register"}
+                                className="text-indigo-600 hover:text-indigo-500 font-medium"
+                            >
+                                {userType === 'admin' ? 'Switch to Patient Login' : 'Create an account'}
+                            </Link>
+                        </p>
                     </div>
-
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                        {isLoading ? (
-                            <Loader2 className="animate-spin h-5 w-5" />
-                        ) : (
-                            'Sign In'
-                        )}
-                    </button>
-                </form>
-
-                <div className="mt-6 text-center text-sm">
-                    <span className="text-gray-500">Don't have an account? </span>
-                    <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-                        Create account
-                    </Link>
                 </div>
             </div>
         </div>
