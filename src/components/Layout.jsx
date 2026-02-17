@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Menu, X, Bell } from 'lucide-react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Users, Settings, Menu, X, Bell, Home, LogOut } from 'lucide-react';
 
 const Layout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const location = useLocation();
+    const navigate = useNavigate();
 
     const navItems = [
-        { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-        { icon: Users, label: 'Users', path: '/users' },
-        { icon: Settings, label: 'Settings', path: '/settings' },
+        { icon: LayoutDashboard, label: 'Dashboard', path: '/app' },
+        { icon: Users, label: 'Users', path: '/app/users' },
+        { icon: Settings, label: 'Settings', path: '/app/settings' },
     ];
+
+    const handleLogout = () => {
+        navigate('/');
+    };
 
     return (
         <div className="flex h-screen bg-gray-100">
@@ -20,7 +25,7 @@ const Layout = () => {
                     } md:relative md:translate-x-0`}
             >
                 <div className="flex items-center justify-between h-16 px-6 border-b">
-                    <span className="text-xl font-bold text-indigo-600">My App</span>
+                    <span className="text-xl font-bold text-indigo-600">Pasco Dental</span>
                     <button
                         className="md:hidden"
                         onClick={() => setIsSidebarOpen(false)}
@@ -29,6 +34,13 @@ const Layout = () => {
                     </button>
                 </div>
                 <nav className="p-4 space-y-2">
+                    <Link
+                        to="/"
+                        className="flex items-center p-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors mb-4"
+                    >
+                        <Home size={20} className="mr-3" />
+                        <span className="font-medium">Back to Landing</span>
+                    </Link>
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = location.pathname === item.path;
@@ -46,6 +58,13 @@ const Layout = () => {
                             </Link>
                         );
                     })}
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center p-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                        <LogOut size={20} className="mr-3" />
+                        <span className="font-medium">Logout</span>
+                    </button>
                 </nav>
             </aside>
 
@@ -66,7 +85,7 @@ const Layout = () => {
                                 <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
                             </button>
                             <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold">
-                                U
+                                A
                             </div>
                         </div>
                     </div>
