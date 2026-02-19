@@ -115,6 +115,12 @@ const Landing = () => {
               <a href="#contact" className="text-gray-600 hover:text-indigo-600 transition-colors">Contact</a>
               <div className="flex items-center space-x-4">
                 <Link
+                  to="/register"
+                  className="text-indigo-600 hover:text-indigo-700 font-medium"
+                >
+                  Register
+                </Link>
+                <Link
                   to="/login?user=patient"
                   className="text-indigo-600 hover:text-indigo-700 font-medium"
                 >
@@ -145,6 +151,12 @@ const Landing = () => {
               <a href="#services" className="block px-3 py-2 text-gray-600 hover:text-indigo-600">Services</a>
               <a href="#features" className="block px-3 py-2 text-gray-600 hover:text-indigo-600">Features</a>
               <a href="#contact" className="block px-3 py-2 text-gray-600 hover:text-indigo-600">Contact</a>
+              <Link
+                to="/register"
+                className="block px-3 py-2 text-indigo-600 font-medium"
+              >
+                Register
+              </Link>
               <Link
                 to="/login?user=patient"
                 className="block px-3 py-2 text-indigo-600 font-medium"

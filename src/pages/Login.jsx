@@ -26,7 +26,7 @@ const Login = () => {
             if (userType === 'admin') {
                 navigate('/app');
             } else {
-                navigate('/app');
+                navigate('/patient');
             }
         }, 1000);
     };
