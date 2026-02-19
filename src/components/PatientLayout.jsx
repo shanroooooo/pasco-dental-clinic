@@ -35,13 +35,6 @@ const PatientLayout = () => {
                     </button>
                 </div>
                 <nav className="p-4 space-y-2">
-                    <Link
-                        to="/"
-                        className="flex items-center p-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors mb-4"
-                    >
-                        <Home size={20} className="mr-3" />
-                        <span className="font-medium">Back to Home</span>
-                    </Link>
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = location.pathname === item.path;
