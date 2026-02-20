@@ -1,88 +1,101 @@
-import React, { useState } from 'react';
-import { User, Phone, Mail, MapPin, Calendar, FileText, Shield, CreditCard, AlertCircle, Edit, Save, X, Upload, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Phone, Mail, MapPin, Calendar, FileText, Shield, CreditCard, AlertCircle, Edit, Save, X, Upload, Download, Loader2 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import apiService from '../services/api';
 
 const PatientProfile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [activeTab, setActiveTab] = useState('personal');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [patientData, setPatientData] = useState(null);
+    const [medicalHistory, setMedicalHistory] = useState([]);
+    const [documents, setDocuments] = useState([]);
+    const [dentists, setDentists] = useState([]);
+    const { user } = useAuth();
+
     const [formData, setFormData] = useState({
-        firstName: 'Sarah',
-        lastName: 'Johnson',
-        email: 'sarah.johnson@email.com',
-        phone: '(555) 123-4567',
-        dateOfBirth: '1985-06-15',
-        address: '123 Main St, City, State 12345',
-        emergencyContact: 'John Johnson',
-        emergencyPhone: '(555) 987-6543',
-        relationship: 'Spouse',
-        insuranceProvider: 'Delta Dental',
-        insuranceId: 'DD123456789',
-        groupNumber: 'GRP-001',
-        allergies: 'Penicillin',
-        medications: 'Lisinopril 10mg daily',
-        medicalConditions: 'Hypertension',
-        preferredDentist: 'Dr. Sarah Johnson',
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        dateOfBirth: '',
+        address: '',
+        emergencyContact: '',
+        emergencyPhone: '',
+        relationship: '',
+        insuranceProvider: '',
+        insuranceId: '',
+        groupNumber: '',
+        allergies: '',
+        medications: '',
+        medicalConditions: '',
+        preferredDentist: '',
         preferredTime: 'Morning',
-        reminderPreference: 'Email and SMS'
+        reminderPreference: 'Email'
     });
 
-    const medicalHistory = [
-        {
-            date: '2024-02-15',
-            procedure: 'Teeth Cleaning',
-            dentist: 'Dr. Sarah Johnson',
-            notes: 'Routine cleaning completed successfully',
-            cost: '$120',
-            paid: true
-        },
-        {
-            date: '2024-02-10',
-            procedure: 'Filling Procedure',
-            dentist: 'Dr. Michael Chen',
-            notes: 'Cavity filled on tooth #19',
-            cost: '$250',
-            paid: true
-        },
-        {
-            date: '2024-01-20',
-            procedure: 'Emergency Consultation',
-            dentist: 'Dr. Emily Rodriguez',
-            notes: 'Tooth pain evaluation - root canal recommended',
-            cost: '$100',
-            paid: true
-        },
-        {
-            date: '2023-12-15',
-            procedure: 'Annual Check-up',
-            dentist: 'Dr. Sarah Johnson',
-            notes: 'General examination, all clear',
-            cost: '$150',
-            paid: true
-        }
-    ];
+    useEffect(() => {
+        loadPatientData();
+        loadDentists();
+    }, []);
 
-    const documents = [
-        {
-            id: 1,
-            name: 'X-Ray - 2024-02-15',
-            type: 'Medical Imaging',
-            date: '2024-02-15',
-            size: '2.4 MB'
-        },
-        {
-            id: 2,
-            name: 'Treatment Plan',
-            type: 'Document',
-            date: '2024-02-10',
-            size: '156 KB'
-        },
-        {
-            id: 3,
-            name: 'Insurance Card',
-            type: 'ID Document',
-            date: '2024-01-15',
-            size: '890 KB'
+    const loadPatientData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            // Load patient profile
+            const patientResponse = await apiService.getPatientProfile();
+            setPatientData(patientResponse);
+            
+            // Load medical history (appointments)
+            const appointmentsResponse = await apiService.getAppointments({ status: 'Completed' });
+            setMedicalHistory(appointmentsResponse.appointments || []);
+            
+            // Load documents
+            const documentsResponse = await apiService.getPatientDocuments(patientResponse._id);
+            setDocuments(documentsResponse.documents || []);
+            
+            // Update form data with patient data
+            if (patientResponse && patientResponse.userId) {
+                setFormData({
+                    firstName: patientResponse.userId.firstName || '',
+                    lastName: patientResponse.userId.lastName || '',
+                    email: patientResponse.userId.email || '',
+                    phone: patientResponse.userId.phone || '',
+                    dateOfBirth: patientResponse.userId.dateOfBirth ? new Date(patientResponse.userId.dateOfBirth).toISOString().split('T')[0] : '',
+                    address: patientResponse.userId.address ? `${patientResponse.userId.address.street || ''}, ${patientResponse.userId.address.city || ''}, ${patientResponse.userId.address.state || ''} ${patientResponse.userId.address.zipCode || ''}` : '',
+                    emergencyContact: patientResponse.userId.emergencyContact?.name || '',
+                    emergencyPhone: patientResponse.userId.emergencyContact?.phone || '',
+                    relationship: patientResponse.userId.emergencyContact?.relationship || '',
+                    insuranceProvider: patientResponse.medicalInfo?.insuranceProvider || '',
+                    insuranceId: patientResponse.medicalInfo?.insuranceId || '',
+                    groupNumber: patientResponse.medicalInfo?.groupNumber || '',
+                    allergies: patientResponse.medicalInfo?.allergies?.join(', ') || '',
+                    medications: patientResponse.medicalInfo?.medications?.map(med => `${med.name} ${med.dosage} ${med.frequency}`).join(', ') || '',
+                    medicalConditions: patientResponse.medicalInfo?.medicalConditions?.map(cond => cond.condition).join(', ') || '',
+                    preferredDentist: patientResponse.preferences?.preferredDentist?._id || '',
+                    preferredTime: patientResponse.preferences?.preferredTime || 'Morning',
+                    reminderPreference: patientResponse.preferences?.reminderPreference?.join(', ') || 'Email'
+                });
+            }
+        } catch (error) {
+            console.error('Error loading patient data:', error);
+            setError('Failed to load patient data');
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
+
+    const loadDentists = async () => {
+        try {
+            const response = await apiService.getDentists();
+            setDentists(response);
+        } catch (error) {
+            console.error('Error loading dentists:', error);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -92,16 +105,99 @@ const PatientProfile = () => {
         }));
     };
 
-    const handleSave = () => {
-        // Save profile logic here
-        setIsEditing(false);
-        alert('Profile updated successfully!');
+    const handleSave = async () => {
+        try {
+            setError(null);
+            
+            // Prepare user profile update data
+            const userProfileData = {
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                phone: formData.phone,
+                address: formData.address,
+                emergencyContact: {
+                    name: formData.emergencyContact,
+                    phone: formData.emergencyPhone,
+                    relationship: formData.relationship
+                }
+            };
+
+            // Update user profile
+            await apiService.updateProfile(userProfileData);
+
+            // Prepare patient profile update data
+            const patientProfileData = {
+                medicalInfo: {
+                    insuranceProvider: formData.insuranceProvider,
+                    insuranceId: formData.insuranceId,
+                    groupNumber: formData.groupNumber,
+                    allergies: formData.allergies.split(',').map(a => a.trim()).filter(a => a),
+                    medications: formData.medications.split(',').map(m => {
+                        const parts = m.trim().split(' ');
+                        return {
+                            name: parts[0] || '',
+                            dosage: parts[1] || '',
+                            frequency: parts.slice(2).join(' ') || ''
+                        };
+                    }).filter(med => med.name),
+                    medicalConditions: formData.medicalConditions.split(',').map(c => ({ condition: c.trim(), status: 'active' })).filter(c => c.condition)
+                },
+                preferences: {
+                    preferredDentist: formData.preferredDentist,
+                    preferredTime: formData.preferredTime,
+                    reminderPreference: formData.reminderPreference.split(',').map(r => r.trim()).filter(r => r)
+                }
+            };
+
+            // Update patient profile
+            await apiService.updatePatient(patientData._id, patientProfileData);
+
+            setIsEditing(false);
+            await loadPatientData(); // Reload data to get updates
+            alert('Profile updated successfully!');
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            setError('Failed to update profile');
+        }
     };
 
     const handleCancel = () => {
-        // Reset form data to original values
         setIsEditing(false);
+        loadPatientData(); // Reload original data
     };
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="max-w-6xl mx-auto flex items-center justify-center h-96">
+                <div className="text-center">
+                    <Loader2 className="animate-spin mx-auto mb-4" size={40} />
+                    <p className="text-gray-600">Loading patient profile...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="max-w-6xl mx-auto">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center">
+                    <AlertCircle className="text-red-500 mr-3" size={24} />
+                    <div>
+                        <h3 className="text-red-800 font-medium">Error</h3>
+                        <p className="text-red-600">{error}</p>
+                        <button 
+                            onClick={loadPatientData}
+                            className="mt-2 text-red-600 hover:text-red-800 underline text-sm"
+                        >
+                            Try again
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const renderPersonalInfo = () => (
         <div className="space-y-6">
@@ -394,9 +490,12 @@ const PatientProfile = () => {
                                 isEditing ? 'border-gray-300' : 'border-gray-200 bg-gray-50'
                             }`}
                         >
-                            <option value="Dr. Sarah Johnson">Dr. Sarah Johnson</option>
-                            <option value="Dr. Michael Chen">Dr. Michael Chen</option>
-                            <option value="Dr. Emily Rodriguez">Dr. Emily Rodriguez</option>
+                            <option value="">Select a dentist</option>
+                            {dentists.map(dentist => (
+                                <option key={dentist._id} value={dentist._id}>
+                                    Dr. {dentist.firstName} {dentist.lastName}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     <div>
@@ -452,37 +551,45 @@ const PatientProfile = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {medicalHistory.map((record, index) => (
-                                <tr key={index} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {record.date}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div>
-                                            <div className="text-sm font-medium text-gray-900">{record.procedure}</div>
-                                            <div className="text-sm text-gray-500">{record.notes}</div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {record.dentist}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {record.cost}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                            record.paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                        }`}>
-                                            {record.paid ? 'Paid' : 'Unpaid'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <button className="text-teal-600 hover:text-teal-900">
-                                            View Details
-                                        </button>
+                            {medicalHistory.length > 0 ? (
+                                medicalHistory.map((record) => (
+                                    <tr key={record._id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {new Date(record.dateTime).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-900">{record.serviceType}</div>
+                                                <div className="text-sm text-gray-500">{record.notes}</div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {record.dentistId ? `Dr. ${record.dentistId.firstName} ${record.dentistId.lastName}` : 'Unknown'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            ${record.cost}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                record.paymentStatus === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                            }`}>
+                                                {record.paymentStatus}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button className="text-teal-600 hover:text-teal-900">
+                                                View Details
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                                        No treatment history available
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -501,24 +608,33 @@ const PatientProfile = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {documents.map((doc) => (
-                    <div key={doc.id} className="bg-white border rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-3">
-                            <div className="p-2 bg-gray-100 rounded-lg">
-                                <FileText className="text-gray-600" size={24} />
+                {documents.length > 0 ? (
+                    documents.map((doc) => (
+                        <div key={doc._id} className="bg-white border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div className="flex items-start justify-between mb-3">
+                                <div className="p-2 bg-gray-100 rounded-lg">
+                                    <FileText className="text-gray-600" size={24} />
+                                </div>
+                                <button 
+                                    onClick={() => apiService.downloadDocument(doc._id)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <Download size={20} />
+                                </button>
                             </div>
-                            <button className="text-gray-400 hover:text-gray-600">
-                                <Download size={20} />
-                            </button>
+                            <h3 className="font-medium text-gray-900 mb-1">{doc.name}</h3>
+                            <p className="text-sm text-gray-600 mb-2">{doc.type}</p>
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                                <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
+                                <span>{(doc.fileSize / 1024 / 1024).toFixed(2)} MB</span>
+                            </div>
                         </div>
-                        <h3 className="font-medium text-gray-900 mb-1">{doc.name}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{doc.type}</p>
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                            <span>{doc.date}</span>
-                            <span>{doc.size}</span>
-                        </div>
+                    ))
+                ) : (
+                    <div className="col-span-full text-center py-8 text-gray-500">
+                        No documents available
                     </div>
-                ))}
+                )}
             </div>
         </div>
     );
