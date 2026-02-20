@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Mail, Lock, Loader2, User, Stethoscope, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Loader2, User, Stethoscope, ArrowLeft, AlertCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
     const [userType, setUserType] = useState('patient');
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const { login, loading, error, isAuthenticated } = useAuth();
 
     useEffect(() => {
         const userParam = searchParams.get('user');
@@ -17,18 +18,33 @@ const Login = () => {
         }
     }, [searchParams]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            setIsLoading(false);
-            if (userType === 'admin') {
+    useEffect(() => {
+        if (isAuthenticated) {
+            const userRole = localStorage.getItem('userRole') || 'patient';
+            if (userRole === 'admin' || userRole === 'dentist' || userRole === 'staff') {
                 navigate('/app');
             } else {
                 navigate('/patient');
             }
-        }, 1000);
+        }
+    }, [isAuthenticated, navigate]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (!email || !password) {
+            return;
+        }
+
+        try {
+            await login(email, password);
+            // Store user role for navigation
+            const userRole = email.includes('admin') || email.includes('dentist') || email.includes('staff') ? 'admin' : 'patient';
+            localStorage.setItem('userRole', userRole);
+        } catch (error) {
+            // Error is handled by the auth context
+            console.error('Login failed:', error);
+        }
     };
 
     const toggleUserType = (type) => {
@@ -146,12 +162,20 @@ const Login = () => {
                             </a>
                         </div>
 
+                        {/* Error Display */}
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center">
+                                <AlertCircle className="text-red-500 mr-2" size={20} />
+                                <span className="text-red-700 text-sm">{error}</span>
+                            </div>
+                        )}
+
                         <button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={loading}
                             className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
                         >
-                            {isLoading ? (
+                            {loading ? (
                                 <>
                                     <Loader2 className="animate-spin mr-2" size={20} />
                                     Signing in...
