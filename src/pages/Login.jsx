@@ -118,7 +118,7 @@ const Login = () => {
                                 <input
                                     type="email"
                                     required
-                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
+                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors text-gray-900"
                                     placeholder={userType === 'admin' ? 'admin@clinic.com' : 'patient@email.com'}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -137,7 +137,7 @@ const Login = () => {
                                 <input
                                     type="password"
                                     required
-                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
+                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors text-gray-900"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
