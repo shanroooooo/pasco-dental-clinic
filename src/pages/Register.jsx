@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Loader2 } from 'lucide-react';
+import { User, Mail, Lock, Phone, Loader2 } from 'lucide-react';
 
 const Register = () => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
+        phone: '',
         password: '',
         confirmPassword: ''
     });
@@ -69,6 +70,24 @@ const Register = () => {
                                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
                                 placeholder="you@example.com"
                                 value={formData.email}
+                                onChange={handleChange}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Phone className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <input
+                                type="tel"
+                                name="phone"
+                                required
+                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
+                                placeholder="(555) 123-4567"
+                                value={formData.phone}
                                 onChange={handleChange}
                             />
                         </div>
